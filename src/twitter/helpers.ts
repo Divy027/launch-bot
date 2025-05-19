@@ -1,10 +1,13 @@
 import { cache } from "./cache";
-import { Mention, MentionsMeta, ParsedMention } from "./types";
+import { MediaIncludes, Mention, MentionsMeta, ParsedMention } from "./types";
 import fs from "fs";
+import dotenv from "dotenv";
 
-const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN || "";
-const USER_ID = process.env.TWITTER_USER_ID || "";
-const USERNAME = process.env.TWITTER_USERNAME || "";
+dotenv.config();
+
+export const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN || "";
+export const USER_ID = process.env.TWITTER_USER_ID || "";
+export const USERNAME = process.env.TWITTER_USERNAME || "";
 
 const REQUIRED_ENV_VARS = [
   { name: "TWITTER_BEARER_TOKEN", value: BEARER_TOKEN },
@@ -12,19 +15,22 @@ const REQUIRED_ENV_VARS = [
   { name: "TWITTER_USERNAME", value: USERNAME },
 ];
 
-export const defaultImageUrl = (() => {
+export const defaultImageBlob = (() => {
   const loc = "./public/default.jpg";
 
   const file = fs.readFileSync(loc);
-  const base64 = file.toString("base64");
+  const blob = new Blob([file], { type: "image/jpeg" });
 
-  return `data:image/jpg;base64,${base64}`;
+  return blob;
 })();
 
 export const getMentions: (
   pagination_token?: string
-) => Promise<Mention[]> = async (pagination_token) => {
-  let query = "?";
+) => Promise<(Mention & { twitterLink: string; imageBlob: Blob })[]> = async (
+  pagination_token
+) => {
+  let query =
+    "?media.fields=url&user.fields=username&expansions=attachments.media_keys,author_id";
 
   const lastFetchedId = cache.get("last-fetched-id");
   if (lastFetchedId) {
@@ -55,24 +61,76 @@ export const getMentions: (
   if (!response) {
     throw new Error("Failed to fetch mentions");
   }
-
+  
   const data = await response.json().catch((err) => {
     console.error(err);
     return null;
   });
-
+  console.log("response data", data);
+  
   if (!data) {
     throw new Error("Failed to parse mentions");
   }
 
-  const mentions = data.data as Mention[];
-  if (!mentions || !Array.isArray(mentions)) {
+  const _mentions = data.data as Mention[];
+  if (!_mentions || !Array.isArray(_mentions)) {
     throw new Error("Invalid mentions data");
   }
 
   const meta = data.meta as MentionsMeta;
   if (!meta) {
     throw new Error("Invalid meta data");
+  }
+
+  const mediaIncludes = data.includes as MediaIncludes;
+  if (!mediaIncludes) {
+    throw new Error("Invalid media includes data");
+  }
+
+  const mentions: (Mention & { twitterLink: string; imageBlob: Blob })[] = [];
+
+  for (let i = 0; i < _mentions.length; i++) {
+    const mention = _mentions[i];
+
+    let imageUrl;
+    let twitterLink = `https://twitter.com/intent/user?user_id=${mention.author_id}`;
+
+    const mediaKeys = mention?.attachments?.media_keys || [];
+    for (let i = 0; i < mediaKeys.length; i++) {
+      const mediaKey = mediaKeys[i];
+      const media = mediaIncludes.media.find((m) => m.media_key === mediaKey);
+      if (!media) continue;
+
+      if (media.type === "photo" && media.url) {
+        imageUrl = media.url;
+        break;
+      }
+    }
+
+    const imageBlob = imageUrl
+      ? await fetch(imageUrl)
+          .then((res) =>
+            res.blob().catch((err) => {
+              console.error(err);
+              return null;
+            })
+          )
+          .catch((err) => {
+            console.error(err);
+            return null;
+          })
+      : null;
+
+    const user = mediaIncludes?.users?.find((u) => u.id === mention.author_id);
+    if (user) {
+      twitterLink = `https://twitter.com/${user.username}`;
+    }
+
+    mentions.push({
+      ...mention,
+      imageBlob: imageBlob || defaultImageBlob,
+      twitterLink,
+    });
   }
 
   if (meta.next_token) {
@@ -83,7 +141,9 @@ export const getMentions: (
   }
 };
 
-export const parseAndGetRelevantMentions = (mentions: Mention[]) => {
+export const parseAndGetRelevantMentions = (
+  mentions: (Mention & { twitterLink: string; imageBlob: Blob })[]
+) => {
   const parsedMentions = mentions.map((mention) => {
     const text = mention?.text;
     if (!text) {
@@ -109,7 +169,8 @@ export const parseAndGetRelevantMentions = (mentions: Mention[]) => {
     const tickerSymbol = match[1]?.trim();
     const tickerName = match[2]?.trim();
     const _platformName = match[3]?.trim();
-    const imageUrl = mention.media?.[0]?.media_url_https || defaultImageUrl;
+
+    // const imageUrl =  || defaultImageUrl;
 
     if (!tickerSymbol || typeof tickerSymbol !== "string") {
       return null;
@@ -139,7 +200,8 @@ export const parseAndGetRelevantMentions = (mentions: Mention[]) => {
       tickerSymbol,
       tickerName,
       platformName,
-      imageUrl,
+      imageBlob: mention.imageBlob,
+      twitterLink: mention.twitterLink,
     };
 
     return parsedMention;
@@ -173,11 +235,11 @@ export const init = async () => {
     const { name, value } = REQUIRED_ENV_VARS[i];
 
     if (value === undefined || value === "" || value === null) {
-      console.error(`${name} is not defined in env`);
+      console.error(`%c${name} is not defined in env`, "color: red");
       process.exit(1);
     }
   }
-  console.log("All environment variables are defined");
+  console.log("%cAll environment variables are defined", "color: green");
 };
 
 export const shutdown = (signal: string, jobs: { stop: () => void }[]) => {

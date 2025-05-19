@@ -17,6 +17,9 @@ export class LoopJob {
   }
 
   start() {
+    console.log("\n");
+    console.log(`%cStarting ${this.jobName} job...`, "color: blue");
+
     this.run().catch((error) => {
       console.error(`Error in ${this.jobName} job`, error);
     });

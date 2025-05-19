@@ -6,6 +6,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import axios from 'axios';
 import fs from 'fs';
 import FormData from "form-data";
+import { USERNAME } from '../twitter/helpers';
 
 export async function getKeyPairFromPrivateKey(key: string) {
     return Keypair.fromSecretKey(
@@ -64,16 +65,17 @@ export function generatePubKey({
 }
 
 
-  export async function getPumpURI(name: string, symbol: string,twitter: string, telegram: string, description: string, website: string,/* image:  */  ) {
+  export async function getPumpURI(name: string, symbol: string,twitter: string, image: Blob ) {
     const formData = new FormData();
     //@notice: Handle Image here 
     //formData.append("file", await fs.openAsBlob("./example.png")),
+    formData.append("file", image);
     formData.append("name", `${name}`),
     formData.append("symbol", `${symbol}`),
-    formData.append("description", `${description}`),
+    formData.append("description", `Launched via @${USERNAME}`),
     formData.append("twitter", `${twitter}`),
-    formData.append("telegram", `${telegram}`),
-    formData.append("website", `${website}`),
+    formData.append("telegram", ``),
+    formData.append("website", ``),
     formData.append("showName", "true");
 
     const metadataResponse = await axios.post(
@@ -91,11 +93,12 @@ export function generatePubKey({
 const PINATA_API_KEY = process.env.PINATA_API_KEY!;
 const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY!;
 
-export async function getBonkUri(name: string, symbol: string, description: string, twitter: string /* image:*/) {
+export async function getBonkUri(name: string, symbol: string, twitter: string, image: Blob) {
 
   const formData = new FormData();
   //@notice: Handle Image here 
   // formData.append('file', fs.createReadStream('./kun.png'));
+  formData.append("file", image);
 
   const imageUploadResponse = await axios.post(
     'https://api.pinata.cloud/pinning/pinFileToIPFS',
@@ -118,7 +121,7 @@ export async function getBonkUri(name: string, symbol: string, description: stri
   const metadata = {
     name: `${name}`,
     symbol: `${symbol}`,
-    description: `${description}`,
+    description: `Launched via @${USERNAME}`,
     createdOn: 'https://bonk.fun',
     image: imageUrl,
     twitter: `${twitter}`,

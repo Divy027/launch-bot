@@ -16,7 +16,7 @@ const REQUIRED_ENV_VARS = [
 ];
 
 export const defaultImageBlob = (() => {
-  const loc = "./public/default.jpg";
+  const loc = "default.jpg";
 
   const file = fs.readFileSync(loc);
   const blob = new Blob([file], { type: "image/jpeg" });

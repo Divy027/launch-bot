@@ -160,7 +160,8 @@ export const parseAndGetRelevantMentions = (
         "\\s+" + // ? match multiple spaces
         "([\\w\\s'.-]+)" + // ? match ticker_name
         "\\s+" + // ? match multiple spaces
-        "(Pump[\\s.]?fun|let(?:'|’)?s[\\s]?bonk[\\s.]?fun)", // ? match platform name
+        // "(Pump[\\s.]?fun|let(?:'|’)?s[\\s]?bonk[\\s.]?fun)", // ? match platform name
+        "(pump\\s*fun|let(?:'|’)?s?\\s*bonk)", // ? match platform name
       "i"
     );
 

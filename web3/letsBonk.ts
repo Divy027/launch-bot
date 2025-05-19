@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program, Idl } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, Keypair, SYSVAR_RENT_PUBKEY, Connection } from "@solana/web3.js";
 import  TARGET_PROGRAM_IDL  from "./IDL/bonk.json"
+import bs58 from 'bs58';
 import dotenv from 'dotenv'; 
 dotenv.config();
 
@@ -43,13 +44,13 @@ export async function createTokenPoolWithInternalWallet(
 
     const connection = new Connection(TARGET_RPC_URL, "confirmed");
 
-    const privateKeyEnvVar = process.env.WALLET_PRIVATE_KEY_BYTES;
+    const privateKeyEnvVar = process.env.PAYMENT_WALLET_BASE58;
     if (!privateKeyEnvVar) {
         throw new Error("WALLET_PRIVATE_KEY_BYTES not found in .env file. Expected a stringified JSON array of numbers.");
     }
     let secretKeyBytes: Uint8Array;
     try {
-        secretKeyBytes = Uint8Array.from(JSON.parse(privateKeyEnvVar));
+        secretKeyBytes = Uint8Array.from(bs58.decode(privateKeyEnvVar));
     } catch (e) {
         throw new Error("Failed to parse WALLET_PRIVATE_KEY_BYTES. Ensure it's a valid JSON array string.");
     }
@@ -77,8 +78,8 @@ export async function createTokenPoolWithInternalWallet(
     const curveParam: CurveParams = {
         constant: {
             supply: new anchor.BN("1000000000000000"),
-            totalBaseSell: new anchor.BN("800000000000000"),
-            totalQuoteFundRaising: new anchor.BN("30000000000"),
+            totalBaseSell: new anchor.BN("793100000000000"),
+            totalQuoteFundRaising: new anchor.BN("85000000000"),
             migrateType: 1,
         }
     };

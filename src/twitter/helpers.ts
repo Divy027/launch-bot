@@ -61,13 +61,13 @@ export const getMentions: (
   if (!response) {
     throw new Error("Failed to fetch mentions");
   }
-  
+
   const data = await response.json().catch((err) => {
     console.error(err);
     return null;
   });
   console.log("response data", data);
-  
+
   if (!data) {
     throw new Error("Failed to parse mentions");
   }
@@ -133,12 +133,15 @@ export const getMentions: (
     });
   }
 
-  if (meta.next_token) {
-    const next_mentions = await getMentions(meta.next_token);
-    return [...mentions, ...next_mentions];
-  } else {
-    return mentions;
-  }
+  return mentions;
+
+  // if (meta.next_token) {
+  //   const next_mentions = await getMentions(meta.next_token);
+  //   if (next_mentions[0].id) cache.set("last-fetched-id", next_mentions[0].id);
+  //   return [...mentions, ...next_mentions];
+  // } else {
+  //   return mentions;
+  // }
 };
 
 export const parseAndGetRelevantMentions = (

@@ -66,10 +66,12 @@ export function generatePubKey({
 
 
   export async function getPumpURI(name: string, symbol: string,twitter: string, image: Blob ) {
+    try {
     const formData = new FormData();
     //@notice: Handle Image here 
     //formData.append("file", await fs.openAsBlob("./example.png")),
-    formData.append("file", image);
+    const buffer = Buffer.from(await image.arrayBuffer());
+    formData.append('file', buffer, { filename: 'image.png' });
     formData.append("name", `${name}`),
     formData.append("symbol", `${symbol}`),
     formData.append("description", `Launched via @${USERNAME}`),
@@ -78,15 +80,14 @@ export function generatePubKey({
     formData.append("website", ``),
     formData.append("showName", "true");
 
-    const metadataResponse = await axios.post(
-      'https://pump.fun/api/ipfs',
-      formData,
-      {
-        headers: formData.getHeaders(),
-      }
-    );
-    const response = metadataResponse.data.metadataUri;
-    return response;
+    const response = await axios.post('https://pump.fun/api/ipfs', formData, {
+      headers: formData.getHeaders(),
+    });
+console.log("RESPONE IN PUMP URI:", response.data.metadataUri)
+    return response.data.metadataUri;
+  }catch(e: any) {
+      console.error("Error in getPumpURI: ",e.message);
+   }
 
   }
 
@@ -94,11 +95,12 @@ const PINATA_API_KEY = process.env.PINATA_API_KEY!;
 const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY!;
 
 export async function getBonkUri(name: string, symbol: string, twitter: string, image: Blob) {
-
+  try {
   const formData = new FormData();
   //@notice: Handle Image here 
   // formData.append('file', fs.createReadStream('./kun.png'));
-  formData.append("file", image);
+  const buffer = Buffer.from(await image.arrayBuffer());
+  formData.append('file', buffer, { filename: 'image.png' });
 
   const imageUploadResponse = await axios.post(
     'https://api.pinata.cloud/pinning/pinFileToIPFS',
@@ -144,5 +146,8 @@ export async function getBonkUri(name: string, symbol: string, twitter: string, 
 
   console.log('✅ Metadata uploaded:', metadataUrl);
   return metadataUrl
+}catch(e: any) {
+  console.error("ERROR in getBonkURI: ", e.message);
+}
 }
 

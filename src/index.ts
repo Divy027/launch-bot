@@ -3,6 +3,8 @@ import * as h from "./twitter/helpers";
 import { LoopJob } from "./twitter/LoopJob";
 import { ParsedMention } from "./twitter/types";
 import { getBonkUri, getPumpURI } from "./web3/utils";
+import { launchPumpToken } from "./web3/pumpFun";
+import { launchBonkToken } from "./web3/letsBonk";
 
 h.init().then(() => {
   const job = new LoopJob("Mentions Job", jobFunction, 60 * 1000);
@@ -34,6 +36,13 @@ const processMention = async (mention: ParsedMention) => {
       twitterLink,
       imageBlob
     );
+    if (uri) {
+      const sig = await launchPumpToken(tickerName, tickerSymbol, uri );
+      console.log(`TX (${tickerName} + ${tickerSymbol} + PumpFun): ${sig}`);
+    } else {
+      console.log(`Skipped (${tickerName} + ${tickerSymbol}) PumpFun: NO URI`)
+    }
+ 
 
     // ? Process pump mentions here
   } else if (platformName === "bonk.fun") {
@@ -44,6 +53,13 @@ const processMention = async (mention: ParsedMention) => {
       twitterLink,
       imageBlob
     );
+    if (uri) {
+      const sig = await launchBonkToken(tickerName, tickerSymbol, uri as string)
+      console.log(`TX (${tickerName} + ${tickerSymbol} + LetsBonk): ${sig}`);
+    }else {
+      console.log(`Skipped (${tickerName} + ${tickerSymbol}) LetsBonk: NO URI}`);
+    }
+
 
     // ? Process bonk mentions here
   }

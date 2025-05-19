@@ -36,7 +36,7 @@ const METAPLEX_TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAW
 
 const TARGET_RPC_URL = process.env.RPC || "https://api.mainnet-beta.solana.com"
 
-export async function createTokenPoolWithInternalWallet(
+export async function launchBonkToken(
     tokenName: string,
     tokenSymbol: string,
     tokenUri: string

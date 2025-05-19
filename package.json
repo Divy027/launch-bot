@@ -1,0 +1,17 @@
+{
+  "name": "launch-bot",
+  "version": "1.0.0",
+  "description": "A X bot which launches coins on LetsBonk.fun/Pump.fun via X",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "0.30.1",
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.98.2",
+    "dotenv": "^16.5.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
